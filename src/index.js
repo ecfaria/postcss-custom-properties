@@ -47,12 +47,10 @@ const creator = (opts) => {
 			const rulesByFile = await Promise.all(getRulesByFile);
 
 			rulesByFile.forEach(async (file) => {
-				const fileName =
-					path.basename(Object.keys(file)[0], ".css") + ".xabra.js";
+				const fileName = path.basename(Object.keys(file)[0], ".css") + ".js";
 				const fileRules = Object.values(file)[0];
 				const newFileName = path.resolve(exportDir, fileName);
 				await writeCustomPropertiesToExports(fileRules, [newFileName]);
-				console.log(newFileName, fileRules);
 			});
 		}
 

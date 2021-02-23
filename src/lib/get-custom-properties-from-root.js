@@ -1,23 +1,26 @@
-import { parse } from 'postcss-values-parser';
-import { isBlockIgnored } from './is-ignored';
+import { parse } from "postcss-values-parser";
+import { isBlockIgnored } from "./is-ignored";
 
 // return custom selectors from the css root, conditionally removing them
 export default function getCustomPropertiesFromRoot(root, opts) {
 	// initialize custom selectors
 	const customPropertiesFromHtmlElement = {};
 	const customPropertiesFromRootPseudo = {};
+	const customPropertiesFromGlobalStyle = {};
 
-	// for each html or :root rule
-	root.nodes.slice().forEach(rule => {
+	// for each html or :root or :global rule
+	root.nodes.slice().forEach((rule) => {
 		const customPropertiesObject = isHtmlRule(rule)
 			? customPropertiesFromHtmlElement
-		: isRootRule(rule)
+			: isRootRule(rule)
 			? customPropertiesFromRootPseudo
-		: null;
+			: isGlobalRule(rule)
+			? customPropertiesFromGlobalStyle
+			: null;
 
 		// for each custom property
 		if (customPropertiesObject) {
-			rule.nodes.slice().forEach(decl => {
+			rule.nodes.slice().forEach((decl) => {
 				if (isCustomDecl(decl) && !isBlockIgnored(decl)) {
 					const { prop } = decl;
 
@@ -39,20 +42,36 @@ export default function getCustomPropertiesFromRoot(root, opts) {
 	});
 
 	// return all custom properties, preferring :root properties over html properties
-	return { ...customPropertiesFromHtmlElement, ...customPropertiesFromRootPseudo };
+	return {
+		...customPropertiesFromHtmlElement,
+		...customPropertiesFromRootPseudo,
+		...customPropertiesFromGlobalStyle,
+	};
 }
 
 // match html and :root rules
+const globalSelectorRegExp = /^:global .[A-z][\w-]*$/i;
 const htmlSelectorRegExp = /^html$/i;
 const rootSelectorRegExp = /^:root$/i;
 const customPropertyRegExp = /^--[A-z][\w-]*$/;
 
 // whether the node is an html or :root rule
-const isHtmlRule = node => node.type === 'rule' && node.selector.split(',').some(item => htmlSelectorRegExp.test(item)) && Object(node.nodes).length;
-const isRootRule = node => node.type === 'rule' && node.selector.split(',').some(item => rootSelectorRegExp.test(item)) && Object(node.nodes).length;
+const isGlobalRule = (node) =>
+	node.type === "rule" &&
+	node.selector.split(",").some((item) => globalSelectorRegExp.test(item)) &&
+	Object(node.nodes).length;
+const isHtmlRule = (node) =>
+	node.type === "rule" &&
+	node.selector.split(",").some((item) => htmlSelectorRegExp.test(item)) &&
+	Object(node.nodes).length;
+const isRootRule = (node) =>
+	node.type === "rule" &&
+	node.selector.split(",").some((item) => rootSelectorRegExp.test(item)) &&
+	Object(node.nodes).length;
 
 // whether the node is an custom property
-const isCustomDecl = node => node.type === 'decl' && customPropertyRegExp.test(node.prop);
+const isCustomDecl = (node) =>
+	node.type === "decl" && customPropertyRegExp.test(node.prop);
 
 // whether the node is a parent without children
-const isEmptyParent = node => Object(node.nodes).length === 0;
+const isEmptyParent = (node) => Object(node.nodes).length === 0;
