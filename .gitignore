@@ -8,4 +8,4 @@ package-lock.json
 !.rollup.js
 !.tape.js
 !.travis.yml
-/index.*
+# /index.*

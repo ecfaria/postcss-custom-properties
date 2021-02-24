@@ -29,6 +29,7 @@
     "node": ">=10.0.0"
   },
   "dependencies": {
+    "postcss-custom-properties": "github:ecfaria/postcss-custom-properties",
     "postcss-values-parser": "^4.0.0"
   },
   "peerDependencies": {
